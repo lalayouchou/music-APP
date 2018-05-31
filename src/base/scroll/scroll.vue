@@ -1,5 +1,5 @@
 <template>
-  <div class="wrapper" ref="scroll">
+  <div class="wrapper" ref="wrapper">
     <slot></slot>
   </div>
 </template>
@@ -11,7 +11,9 @@ export default {
   props: {
     data: {
       type: Array,
-      default: []
+      default () {
+        return []
+      }
     },
     click: {
       type: Boolean,
@@ -35,18 +37,18 @@ export default {
     }
   },
   mounted () {
-    setTimeout(() => this._initialize(), 1000)
+    setTimeout(() => this._initialize(), 20)
   },
   watch: {
     data () {
-      this._refresh()
+      setTimeout(() => { this._refresh() }, 20)
     }
   },
   methods: {
     _initialize () {
-      if (!this.$refs.scroll) return
+      if (!this.$refs.wrapper) return
 
-      this.scroll = new BScroll(this.$refs.scroll, {
+      this.scroll = new BScroll(this.$refs.wrapper, {
         click: this.click,
         scrollX: this.scrollX,
         scrollY: this.scrollY,

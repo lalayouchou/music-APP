@@ -6,7 +6,7 @@
           <slider>
             <div v-for="item of recommends" :key="item.id">
               <a :href="item.linkUrl">
-                <img :src="item.picUrl" alt="">
+                <img :src="item.picUrl" alt="" @load="loadImage">
               </a>
             </div>
           </slider>
@@ -15,7 +15,7 @@
           <h2 class="list-title">热门歌单推荐</h2>
           <ul v-if="discList.length">
             <li v-for="item of discList" :key="item.content_id" class="item">
-                <img :src="item.cover" alt="" class="icon" width="60" height="60">
+                <img v-lazy="item.cover" alt="" class="icon" width="60" height="60">
                 <div class="text">
                   <h2 class="name">{{item.username}}</h2>
                   <p class="desc">{{item.title}}</p>
@@ -23,6 +23,7 @@
             </li>
           </ul>
         </div>
+        <loading v-if="!discList.length"></loading>
       </div>
     </scroll>
   </div>
@@ -31,13 +32,15 @@
 <script>
 import Slider from '@/base/slider/slider'
 import Scroll from '@/base/scroll/scroll'
+import Loading from '@/base/loading/loading'
 import {getRecommend, getDiscList} from '@/api/recommend.js'
 import {ERR_OK} from '@/api/config.js'
 export default {
   name: 'recommend',
   components: {
     Slider,
-    Scroll
+    Scroll,
+    Loading
   },
   data () {
     return {
@@ -45,9 +48,9 @@ export default {
       discList: []
     }
   },
-  created () {
+  mounted () {
     this._getRecommend()
-    this._getDiscList()
+    setTimeout(() => { this._getDiscList() }, 1000)
   },
   methods: {
     _getRecommend () {
@@ -67,6 +70,12 @@ export default {
         }
       })
         .catch((e) => console.log(e))
+    },
+    loadImage () {
+      if (!this.checkLoaded) {
+        this.checkLoaded = true
+        this.$refs.scroll._refresh()
+      }
     }
   }
 }

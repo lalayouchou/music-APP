@@ -1,38 +1,53 @@
 <template>
   <div class="recommend">
-    <div class="recommend-content">
-      <div class="slider-wrapper" v-if="recommends.length">
-        <slider>
-          <div v-for="item of recommends" :key="item.id">
-            <a :href="item.linkUrl">
-              <img :src="item.picUrl" alt="">
-            </a>
-          </div>
-        </slider>
+    <scroll class="recommend-content" ref="scroll" :data="discList">
+      <div>
+        <div class="slider-wrapper" v-if="recommends.length">
+          <slider>
+            <div v-for="item of recommends" :key="item.id">
+              <a :href="item.linkUrl">
+                <img :src="item.picUrl" alt="">
+              </a>
+            </div>
+          </slider>
+        </div>
+        <div class="recommend-list">
+          <h2 class="list-title">热门歌单推荐</h2>
+          <ul v-if="discList.length">
+            <li v-for="item of discList" :key="item.content_id" class="item">
+                <img :src="item.cover" alt="" class="icon" width="60" height="60">
+                <div class="text">
+                  <h2 class="name">{{item.username}}</h2>
+                  <p class="desc">{{item.title}}</p>
+                </div>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div class="recommend-list">
-        <h2 class="list-title">热门歌单推荐</h2>
-      </div>
-    </div>
+    </scroll>
   </div>
 </template>
 
 <script>
 import Slider from '@/base/slider/slider'
-import {getRecommend} from '@/api/recommend.js'
+import Scroll from '@/base/scroll/scroll'
+import {getRecommend, getDiscList} from '@/api/recommend.js'
 import {ERR_OK} from '@/api/config.js'
 export default {
   name: 'recommend',
   components: {
-    Slider
+    Slider,
+    Scroll
   },
   data () {
     return {
-      recommends: []
+      recommends: [],
+      discList: []
     }
   },
-  mounted () {
+  created () {
     this._getRecommend()
+    this._getDiscList()
   },
   methods: {
     _getRecommend () {
@@ -42,6 +57,15 @@ export default {
             this.recommends = data.data.slider
           }
         })
+        .catch((e) => console.log(e))
+    },
+    _getDiscList () {
+      getDiscList().then((res) => {
+        if (res.code === ERR_OK) {
+          this.discList = res.recomPlaylist.data['v_hot']
+          console.log(this.discList)
+        }
+      })
         .catch((e) => console.log(e))
     }
   }
@@ -77,12 +101,10 @@ export default {
         .icon
           flex: 0 0 60px
           width: 60px
-          padding-right: 20px
+          border-radius 3px
         .text
-          display: flex
-          flex-direction: column
-          justify-content: center
           flex: 1
+          padding-left: 20px
           line-height: 20px
           overflow: hidden
           font-size: $font-size-medium

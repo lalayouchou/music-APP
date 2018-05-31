@@ -5,6 +5,7 @@
     </div>
     <div class="dots" v-if="dots.length">
       <span v-for="(dot,index) of dots" class="dot"
+      :key="index"
       :class="{'active': currentIndex === index}"></span>
     </div>
   </div>
@@ -42,19 +43,32 @@ export default {
       if (this.autoPlay) {
         this._play()
       }
+      this._addEvent()
     })
   },
+  activated () {
+    if (this.autoPlay) {
+      this._play()
+    }
+  },
+  deactivated () {
+    clearTimeout(this.timer)
+  },
+  beforeDestroy () {
+    this._removeEvent()
+    clearTimeout(this.timer)
+  },
   methods: {
-    _setSliderWidth () {
+    _setSliderWidth (isResize) {
       this.children = this.$refs.sliderGroup.children
-      let clientWidth = this.$refs.sliderGroup.clientWidth
+      let clientWidth = this.$refs.slider.clientWidth
       let width = 0
       for (var i = 0; i < this.children.length; i++) {
         this.children[i].classList.add('slider-item')
         this.children[i].style.width = clientWidth + 'px'
         width += clientWidth
       }
-      if (this.loop) {
+      if (this.loop && !isResize) { // 只有第一次需要加2，因为第一次还没有在首尾添加一个元素
         width += 2 * clientWidth
       }
       this.$refs.sliderGroup.style.width = width + 'px'
@@ -89,6 +103,18 @@ export default {
       this.timer = setTimeout(() => {
         this.scroll.next()
       }, this.interval)
+    },
+    _addEvent () {
+      window.addEventListener('resize', () => {
+        this._setSliderWidth(true)
+        this.$nextTick(() => this.scroll.refresh())
+      })
+    },
+    _removeEvent () {
+      window.removeEventListener('resize', () => {
+        this._setSliderWidth()
+        this.$nextTick(() => this.scroll.refresh())
+      })
     }
   }
 }
@@ -98,6 +124,7 @@ export default {
 @import '~common/stylus/variable'
 .slider
   min-height: 1px
+/*  为了保持有一个宽度值*/
   .slider-group
     position: relative
     overflow: hidden

@@ -15,6 +15,7 @@
     "better-scroll": "^1.11.1",
     "fastclick": "^1.0.6",
     "jsonp": "^0.2.1",
+    "pinyin": "^2.8.3",
     "prettier": "^1.12.1",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",

@@ -3,7 +3,6 @@ import {commonParams, option} from './config.js'
 
 export function getSingerList () {
   const url = 'https://u.y.qq.com/cgi-bin/musicu.fcg'
-
   let params = {
     platform: 'yqq',
     hostUin: 0,

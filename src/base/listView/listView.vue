@@ -1,26 +1,39 @@
 <template>
-  <scroll class="listview" :data="data">
+  <scroll
+  class="listview"
+  :probeType="probeType"
+  :data="data"
+  :listenScroll="listenScroll"
+  ref="scroll"
+  @scroll="_handleScroll"
+  >
     <ul>
       <li v-for="(group, index) of data"
       :key="index"
-      class="list-group" 
+      class="list-group"
+      ref="listGroup"
       >
         <h2 class="list-group-title">{{group.title}}</h2>
         <ul>
           <li v-for="(item, index) of group.items"
           :key="index"
           class="list-group-item">
-            <img :src="item.pic" alt="" class="avatar">
+            <img v-lazy="item.pic" :alt="item.name" class="avatar">
             <p class="name">{{item.name}}</p>
           </li>
         </ul>
       </li>
     </ul>
-    <ul class="list-shortcut">
+    <ul
+    class="list-shortcut"
+    @touchstart.stop.prevent="onShortcutTouchstart"
+    @touchmove.stop.prevent="onShortcutTouchmove"
+    >
       <li v-for="(item, index) of shortcutList"
       :key="index"
       class="item"
-      :class="{current: false}"
+      :data-index="index"
+      :class="{'current': currentIndex === index}"
       >{{item}}</li>
     </ul>
   </scroll>
@@ -28,26 +41,113 @@
 
 <script>
 import scroll from '@/base/scroll/scroll.vue'
-
+import {getData} from 'common/js/dom'
+const ANCHOR_HEIGHT = 18
 export default {
   name: 'listView',
   props: {
     data: {
       type: Array,
-      default: []
+      default () {
+        return []
+      }
+    }
+  },
+  data () {
+    return {
+      currentIndex: 0,
+      listHeight: [],
+      scrollY: 0
     }
   },
   components: {
     scroll
   },
-  mounted () {
-
+  created () {
+    this.initialize()
   },
   computed: {
     shortcutList () {
       return this.data.map((val) => {
         return val.title.substr(0, 1)
       })
+    }
+  },
+  watch: {
+    data () {
+      setTimeout(() => {
+        let listHeight = []
+        let Height = 0
+        listHeight.push(Height)
+        let doms = this.$refs.listGroup
+        for (let i = 0; i < doms.length; i++) {
+          let clientHeight = doms[i].clientHeight
+          Height += clientHeight
+          listHeight.push(Height)
+        }
+        this.listHeight = listHeight
+      }, 20)
+    },
+    scrollY (newY) {
+      // 当滚动到顶部，向下拉的时候
+      if (newY < 0) {
+        this.currentIndex = 0
+        return
+      }
+
+      // 滚动在中间位置的时候
+      for (let i = 0; i < this.listHeight.length - 1; i++) {
+        let startHeight = this.listHeight[i]
+        let endHeight = this.listHeight[i + 1]
+        if (newY >= startHeight && newY < endHeight) {
+          this.currentIndex = parseInt(i)
+          return
+        }
+      }
+
+      // 如果滚动到底部超出HeightList的最后一个数值，直接等于最后一个值
+      this.currentIndex = this.listHeight.length - 2
+    }
+  },
+  methods: {
+    initialize () {
+      this.probeType = 3
+      this.touch = {}
+      this.listenScroll = true
+    },
+    onShortcutTouchstart (e) {
+      const anchorIndex = getData(e.target, 'index')
+      const firstTouch = e.touches[0]
+      this.touch.anchorIndex = anchorIndex
+      this.touch.Y1 = firstTouch.clientY
+      this._toScroll(anchorIndex)
+    },
+    onShortcutTouchmove (e) {
+      const firstTouch = e.touches[0]
+      this.touch.Y2 = firstTouch.clientY
+      const changeIndex = ((this.touch.Y2 - this.touch.Y1) / ANCHOR_HEIGHT) | 0
+      if (changeIndex) {
+        const anchorIndex = parseInt(this.touch.anchorIndex) + changeIndex
+        this._toScroll(anchorIndex)
+      }
+    },
+    _handleScroll (e) {
+      this.scrollY = -e.y | 0
+    },
+    _toScroll (index) {
+      let el
+      if (!index && index !== 0) {
+        return
+      }
+      if (index <= 0) {
+        index = 0
+      }
+      if (index >= this.data.length - 1) {
+        index = this.data.length - 1
+      }
+      this.currentIndex = parseInt(index)
+      el = this.$refs.listGroup[index]
+      this.$refs.scroll.scrollToElement(el, 1)// 不添加懒加载不触发
     }
   }
 }

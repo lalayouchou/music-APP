@@ -34,6 +34,10 @@ export default {
     probeType: {
       type: Number,
       default: 0
+    },
+    listenScroll: {
+      type: Boolean,
+      default: false
     }
   },
   mounted () {
@@ -45,6 +49,12 @@ export default {
     }
   },
   methods: {
+    scrollToElement () {
+      this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
+    },
+    scrollTo () {
+      this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
+    },
     _initialize () {
       if (!this.$refs.wrapper) return
 
@@ -55,6 +65,12 @@ export default {
         eventPassthrough: this.eventPassthrough,
         probeType: this.probeType
       })
+
+      if (this.listenScroll) {
+        this.scroll.on('scroll', (e) => {
+          this.$emit('scroll', e)
+        })
+      }
     },
     _refresh () {
       this.scroll && this.scroll.refresh()

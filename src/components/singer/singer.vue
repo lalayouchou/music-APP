@@ -76,7 +76,7 @@ export default {
           singer.push(map[key])
         }
       }
-      singer.sort((a,b) => {
+      singer.sort((a, b) => {
         return a.title.charCodeAt(0) - b.title.charCodeAt(0)
       })
       return hot.concat(singer)
@@ -90,5 +90,5 @@ export default {
   position: fixed
   top: 88px
   bottom: 0
-  width: 100% 
+  width: 100%
 </style>

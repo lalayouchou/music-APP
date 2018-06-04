@@ -133,7 +133,7 @@ export default {
     diff (newDiff) {
       // 监听diff差值的变化，如果差值开始小于30，那么就需要执行偏移的命令，偏移值等于title的高度减去差值，差值为29，那么向上偏移1，向上方向为负值，所以要添加一个负号
       let offsetTop = (newDiff > 0 && newDiff < TITLE_HEIGHT) ? TITLE_HEIGHT - newDiff
- : 0
+        : 0
       if (this.offsetTop === offsetTop) {
         return
       }
@@ -179,7 +179,7 @@ export default {
       if (index >= this.data.length - 1) {
         index = this.data.length - 1
       }
-      /*this.currentIndex = parseInt(index) 可以去掉，高亮纯粹通过监听scrollY来设置*/
+      /* this.currentIndex = parseInt(index) 可以去掉，高亮纯粹通过监听scrollY来设置 */
       el = this.$refs.listGroup[index]
       this.$refs.scroll.scrollToElement(el, 1)// 不添加timing懒加载不触发，timing值不为0或空，会派发scroll事件
     },

@@ -11,6 +11,7 @@ import Singer from '@/common/js/singer.js'
 import {ERR_OK} from '@/api/config.js'
 import listView from '@/base/listView/listView.vue'
 import pinyin from 'pinyin'
+import {mapMutations} from 'vuex'
 
 const HOT_NAME = '热门'
 const HOT_SINGER_LEN = 10
@@ -82,9 +83,13 @@ export default {
       })
       return hot.concat(singer)
     },
-    selectSinger (item) {
-      console.log(item)
-    }
+    selectSinger (singer) {
+      this.$router.push(`/singer/${singer.mid}`)
+      this.setSinger(singer) // 提交mutation，执行方法，修改state中的数据
+    },
+    ...mapMutations({
+      setSinger: 'GET_SINGER' // 将this.setSinger() 映射为 this.$store.commit('GET_SINGER')
+    })
   }
 }
 </script>

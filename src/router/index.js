@@ -23,10 +23,10 @@ export default new Router({
     {
       path: '/singer',
       name: 'singer',
-      component: Singer
+      component: Singer,
       children: [
         {
-          path: '/:id',
+          path: ':id',
           component: SingerDetail
         }
       ]

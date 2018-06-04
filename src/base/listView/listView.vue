@@ -17,7 +17,9 @@
         <ul>
           <li v-for="(item, index) of group.items"
           :key="index"
-          class="list-group-item">
+          class="list-group-item"
+          @click="handleSelect(item)"
+          >
             <img v-lazy="item.pic" :alt="item.name" class="avatar">
             <p class="name">{{item.name}}</p>
           </li>
@@ -36,13 +38,24 @@
       :class="{'current': currentIndex === index}"
       >{{item}}</li>
     </ul>
+    <div class="list-fixed"
+    v-show="fixedTitle"
+    ref="fixedTitle"
+    >
+      <h2 class="fixed-title">{{fixedTitle}}</h2>
+    </div>
+    <div class="loading-container" v-if="!data.length">
+      <loading></loading>
+    </div>
   </scroll>
 </template>
 
 <script>
 import scroll from '@/base/scroll/scroll.vue'
+import loading from '@/base/loading/loading.vue'
 import {getData} from 'common/js/dom'
 const ANCHOR_HEIGHT = 18
+const TITLE_HEIGHT = 30
 export default {
   name: 'listView',
   props: {
@@ -57,11 +70,13 @@ export default {
     return {
       currentIndex: 0,
       listHeight: [],
-      scrollY: 0
+      scrollY: 0,
+      diff: -1
     }
   },
   components: {
-    scroll
+    scroll,
+    loading
   },
   created () {
     this.initialize()
@@ -71,6 +86,12 @@ export default {
       return this.data.map((val) => {
         return val.title.substr(0, 1)
       })
+    },
+    fixedTitle () {
+      if (this.scrollY <= 0) {
+        return ''
+      }
+      return this.data[this.currentIndex].title ? this.data[this.currentIndex].title : ''
     }
   },
   watch: {
@@ -101,12 +122,25 @@ export default {
         let endHeight = this.listHeight[i + 1]
         if (newY >= startHeight && newY < endHeight) {
           this.currentIndex = parseInt(i)
+          this.diff = endHeight - this.scrollY
           return
         }
       }
 
       // 如果滚动到底部超出HeightList的最后一个数值，直接等于最后一个值
       this.currentIndex = this.listHeight.length - 2
+    },
+    diff (newDiff) {
+      // 监听diff差值的变化，如果差值开始小于30，那么就需要执行偏移的命令，偏移值等于title的高度减去差值，差值为29，那么向上偏移1，向上方向为负值，所以要添加一个负号
+      let offsetTop = (newDiff > 0 && newDiff < TITLE_HEIGHT) ? TITLE_HEIGHT - newDiff
+ : 0
+      if (this.offsetTop === offsetTop) {
+        return
+      }
+      // 这里设置限制条件，为了节省DOM操作，注意在offsetTop从其他值变成0的时候，需要执行一次DOM操作，使其变回原来的位置，所以添加了一个属性this.offsetTop = offsetTop，用来判断，如果上一次不为0 ，这次为0，执行，如果上一次和这一次都为0，不执行，直接返回
+      this.offsetTop = offsetTop
+      let el = this.$refs.fixedTitle
+      el.style.transform = `translate3d(0, ${-offsetTop}px, 0)`
     }
   },
   methods: {
@@ -145,9 +179,12 @@ export default {
       if (index >= this.data.length - 1) {
         index = this.data.length - 1
       }
-      this.currentIndex = parseInt(index)
+      /*this.currentIndex = parseInt(index) 可以去掉，高亮纯粹通过监听scrollY来设置*/
       el = this.$refs.listGroup[index]
-      this.$refs.scroll.scrollToElement(el, 1)// 不添加懒加载不触发
+      this.$refs.scroll.scrollToElement(el, 1)// 不添加timing懒加载不触发，timing值不为0或空，会派发scroll事件
+    },
+    handleSelect (item) {
+      this.$emit('select', item)
     }
   }
 }

@@ -9,7 +9,7 @@ let VueLazyload = require('vue-lazyload')
 Vue.config.productionTip = false
 fastClick.attach(document.body)
 Vue.use(VueLazyload, {
-  loading: require('./common/image/default.png')
+  loading: require('./common/image/default.png') // 直接写地址，那么只是一些字符串
 })
 
 /* eslint-disable no-new */

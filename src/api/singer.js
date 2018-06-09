@@ -18,3 +18,24 @@ export function getSingerList () {
   params = Object.assign({}, params, data, commonParams)
   return jsonp(url, params, originOption)
 }
+
+export function getDetail (singer) {
+  const url = 'https://c.y.qq.com/v8/fcg-bin/fcg_v8_singer_track_cp.fcg'
+  let params = {
+    platform: 'yqq',
+    hostUin: 0,
+    needNewCode: 0,
+    g_tk: 809148348,
+    format: 'jsonp',
+    loginUin: 0,
+    order: 'listen',
+    begin: 0,
+    num: 100,
+    songstatus: 1,
+    singermid: singer.mid
+  }
+
+  let originOption = Object.assign({}, option, {name: 'MusicJsonCallbacksinger_track'})
+  params = Object.assign({}, params, commonParams)
+  return jsonp(url, params, originOption)
+}

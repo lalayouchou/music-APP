@@ -66,7 +66,6 @@ export default {
       getDiscList().then((res) => {
         if (res.code === ERR_OK) {
           this.discList = res.recomPlaylist.data['v_hot']
-          console.log(this.discList)
         }
       })
         .catch((e) => console.log(e))

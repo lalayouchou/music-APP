@@ -32,7 +32,7 @@
 <script>
 import Scroll from '@/base/scroll/scroll'
 import Loading from '@/base/loading/loading'
-import songList from '../song-list/song-list.vue'
+import songList from '@/base/song-list/song-list.vue'
 import {addPrefix} from 'common/js/dom'
 
 const RESERVED_HEIGHT = 44

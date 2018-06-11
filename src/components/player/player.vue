@@ -1,22 +1,28 @@
 <template>
   <div class="player" v-show="playList.length > 0">
-    <transition  name="normal">
+    <transition
+    name="normal"
+    @enter="enter"
+    @after-enter="afterEnter"
+    @leave="leave"
+    @after-leave="afterLeave"
+    >
       <div class="normal-player" v-show="fullScreen">
         <div class="background">
-          <img :src="currentSong.image" alt="" width="100%" height="100%">
+          <img :src="currentSong.image" alt="" width="100%" height="100%" :class="cdClass">
         </div>
         <div class="top">
           <div class="back" @click="back">
             <i class="icon-back"></i>
           </div>
-          <div class="title">{{currentSong.name}}</div>
-          <div class="subtitle">{{currentSong.singer}}</div>
+          <div class="title" v-html="currentSong.name"></div>
+          <div class="subtitle" v-html="currentSong.singer"></div>
         </div>
         <div class="middle">
           <div class="middle-l">
-            <div class="cd-wrapper">
+            <div class="cd-wrapper" ref="cdWrapper">
               <div class="cd">
-                <img :src="currentSong.image" alt="" class="image" :class="">
+                <img :src="currentSong.image" alt="" class="image" :class="cdClass">
               </div>
             </div>
           </div>
@@ -26,13 +32,13 @@
             <div class="icon i-left">
               <i class="icon-sequence"></i>
             </div>
-            <div class="icon i-left">
+            <div class="icon i-left" @click="prev" :class="disableClass">
               <i class="icon-prev"></i>
             </div>
             <div class="icon i-center" @click="togglePlaying">
               <i :class="playIcon"></i>
             </div>
-            <div class="icon i-right">
+            <div class="icon i-right" @click="next" :class="disableClass">
               <i class="icon-next"></i>
             </div>
             <div class="icon i-right">
@@ -45,7 +51,7 @@
     <transition name="mini">
       <div class="mini-player" v-show="!fullScreen" @click="open">
         <div class="icon">
-          <img :src="currentSong.image" alt="" width="40" height="40">
+          <img :src="currentSong.image" alt="" width="40" height="40" :class="cdClass">
         </div>
         <div class="text">
           <h2 class="name">{{currentSong.name}}</h2>
@@ -59,15 +65,27 @@
         </div>
       </div>
     </transition>
-    <audio :src="currentSong.url" ref="audio"></audio>
+    <audio :src="currentSong.url"
+    @canplay="ready"
+    @error="error"
+    ref="audio"></audio>
   </div>
 </template>
 
 <script>
 import { mapGetters, mapMutations } from 'vuex'
+import Animation from 'create-keyframe-animation'
+import {addPrefix} from 'common/js/dom'
+const transform = addPrefix('transform')
 
 export default {
   name: 'player',
+  data () {
+    return {
+      songReady: false,
+      PosAndScale: {}
+    }
+  },
   computed: {
     ...mapGetters([
       'playList',
@@ -81,7 +99,18 @@ export default {
     },
     playIcon () {
       return this.playing ? 'icon-pause' : 'icon-play'
+    },
+    cdClass () {
+      return this.playing ? 'play' : 'play pause'
+    },
+    disableClass () {
+      return this.songReady ? '' : 'disable'
     }
+  },
+  mounted () {
+    this.$nextTick(() => {
+      this.PosAndScale = this._getPosAndScale()
+    })
   },
   watch: {
     playing (newVal) {
@@ -93,12 +122,18 @@ export default {
           this.$refs.audio.pause()
         }
       })
+    },
+    currentSong () {
+      this.$nextTick(() => {
+        this.$refs.audio.play()
+      })
     }
   },
   methods: {
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
-      setPlaying: 'SET_PLAYING'
+      setPlaying: 'SET_PLAYING',
+      setCurrentIndex: 'SET_CURRENT_INDEX'
     }),
     back () {
       this.setFullScreen(false)
@@ -108,6 +143,96 @@ export default {
     },
     togglePlaying () {
       this.setPlaying(!this.playing)
+    },
+    prev () {
+      if (!this.songReady) {
+        return
+      }
+      let currentIndex = this.currentIndex
+      if (currentIndex === 0) {
+        currentIndex = this.playList.length - 1
+      } else {
+        currentIndex--
+      }
+      this.setCurrentIndex(currentIndex)
+      if (!this.playing) {
+        this.setPlaying(true)
+      }
+      this.songReady = false
+    },
+    next () {
+      if (!this.songReady) {
+        return
+      }
+      let currentIndex = this.currentIndex
+      if (currentIndex === this.playList.length - 1) {
+        currentIndex = 0
+      } else {
+        currentIndex++
+      }
+      this.setCurrentIndex(currentIndex)
+      if (!this.playing) {
+        this.setPlaying(true)
+      }
+      this.songReady = false
+    },
+    ready () {
+      this.songReady = true
+    },
+    error () {
+      this.songReady = true
+    },
+    enter(el, done) {
+      let {x, y, scale} = this.PosAndScale
+      let animation = {
+        0: {
+          transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`
+        },
+        60: {
+          transform: `translate3d(0, 0, 0) scale(1.1)`
+        },
+        100: {
+          transform: `translate3d(0, 0, 0) scale(1)`
+        }
+      }
+      Animation.registerAnimation({
+        name: 'move',
+        animation,
+        presets: {
+          duration: 300,
+          easing: 'linear'
+        }
+      })
+      Animation.runAnimation(this.$refs.cdWrapper, 'move', done)
+    },
+    afterEnter () {
+      Animation.unregisterAnimation('move')
+      this.$refs.cdWrapper.style.animation = ''
+    },
+    leave (el, done) {
+      let {x, y, scale} = this.PosAndScale
+      this.$refs.cdWrapper.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
+      this.$refs.cdWrapper.style['transition'] = 'all .3s linear'
+      this.$refs.cdWrapper.addEventListener('transitionend', done)
+    },
+    afterLeave () {
+      this.$refs.cdWrapper.style[transform] = ''
+      this.$refs.cdWrapper.style['transition'] = ''
+    },
+    _getPosAndScale () {
+      const paddingLeft = 40
+      const paddingBottom = 30
+      const paddingtop = 80
+      const targetWidth = window.innerWidth * 0.8
+      const miniWidth = 40
+      const x = -(window.innerWidth / 2 - paddingLeft)
+      const y = window.innerHeight - paddingtop - paddingBottom - window.innerWidth / 2
+      const scale = miniWidth / targetWidth
+      return {
+        x,
+        y,
+        scale
+      }
     }
   }
 }
@@ -198,7 +323,6 @@ export default {
               box-sizing: border-box
               border: 10px solid rgba(255, 255, 255, 0.1)
               border-radius: 50%
-  
               .image
                 position: absolute
                 left: 0
@@ -211,7 +335,7 @@ export default {
                 &.play
                   animation rotate 20s linear infinite
                 &.pause
-                  animation-play-state pause
+                  animation-play-state paused
           .playing-lyric-wrapper
             width: 80%
             margin: 30px auto 0 auto

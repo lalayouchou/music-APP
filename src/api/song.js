@@ -21,7 +21,7 @@ export function createSong (musicData) {
     album: musicData.albumname,
     singer: filterSinger(musicData.singer),
     image: `https://y.gtimg.cn/music/photo_new/T002R300x300M000${musicData.albummid}.jpg?max_age=2592000`,
-    url:  `http://ws.stream.qqmusic.qq.com/C100${musicData.songmid}.m4a?fromtag=0&guid=126548448`
+    url: `http://ws.stream.qqmusic.qq.com/C100${musicData.songmid}.m4a?fromtag=0&guid=126548448`
   })
 }
 // 连接多个歌手名称，join在只有一个的时候，也可以使用

@@ -4,7 +4,7 @@ export const playList = state => state.playList
 
 export const sequenceList = state => state.sequenceList
 
-export const palying = state => state.palying
+export const playing = state => state.playing
 
 export const fullScreen = state => state.fullScreen
 
@@ -15,4 +15,3 @@ export const currentIndex = state => state.currentIndex
 export const currentSong = (state) => {
   return state.playList[state.currentIndex] || {}
 }
-

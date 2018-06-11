@@ -1,14 +1,13 @@
-export const GET_SINGER = 'GET_SINGER'
+export const SET_SINGER = 'SET_SINGER'
 
-export const GET_FULL_SCREEN = 'GET_FULL_SCREEN'
+export const SET_FULL_SCREEN = 'SET_FULL_SCREEN'
 
-export const GET_PALYING = 'GET_PALYING'
+export const SET_PLAYING = 'SET_PLAYING'
 
-export const GET_MODE = 'GET_MODE'
+export const SET_MODE = 'SET_MODE'
 
-export const GET_CURRENT_INDEX = 'GET_CURRENT_INDEX'
+export const SET_CURRENT_INDEX = 'SET_CURRENT_INDEX'
 
-export const GET_PALY_LIST = 'GET_PALY_LIST'
+export const SET_PLAY_LIST = 'SET_PLAY_LIST'
 
-export const GET_SEQUENCE_LIST = 'GET_SEQUENCE_LIST'
-
+export const SET_SEQUENCE_LIST = 'SET_SEQUENCE_LIST'

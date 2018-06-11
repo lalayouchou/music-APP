@@ -21,7 +21,11 @@
       class="list"
       @scroll = "handleScroll"
       ref="list">
-        <song-list :songList="songList" class="song-list-wrapper"></song-list>
+        <song-list
+        :songList="songList"
+        class="song-list-wrapper"
+        @select="handleSelect"
+        ></song-list>
         <div class="loading-container" v-show="!songList.length">
           <loading></loading>
         </div>
@@ -34,6 +38,7 @@ import Scroll from '@/base/scroll/scroll'
 import Loading from '@/base/loading/loading'
 import songList from '@/base/song-list/song-list.vue'
 import {addPrefix} from 'common/js/dom'
+import {mapActions} from 'vuex'
 
 const RESERVED_HEIGHT = 44
 const transform = addPrefix('transform')
@@ -123,10 +128,16 @@ export default {
     handleScroll (e) {
       this.scrollY = -e.y | 0
     },
+    handleSelect (item, index) {
+      this.selectPlay({list: this.songList, index}) // 这里使用对象，因为那边有结构写法,注意这里的键名要和结构对象一样
+    },
     _initializeScroll () {
       this.probeType = 3
       this.listenScroll = true
-    }
+    },
+    ...mapActions([
+      'selectPlay'
+    ])
   }
 }
 </script>

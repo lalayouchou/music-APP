@@ -1,65 +1,70 @@
 <template>
-  <div class="player" v-show="playList.length">
-    <div class="normal-player" v-show="fullscreen">
-      <div class="background">
-        <img src="" alt="" width="100%" height="100%">
-      </div>
-      <div class="top">
-        <div class="back">
-          <i class="icon-back"></i>
+  <div class="player" v-show="playList.length > 0">
+    <transition  name="normal">
+      <div class="normal-player" v-show="fullScreen">
+        <div class="background">
+          <img :src="currentSong.image" alt="" width="100%" height="100%">
         </div>
-        <div class="title"></div>
-        <div class="subtitle"></div>
-      </div>
-      <div class="middle">
-        <div class="middle-l">
-          <div class="cd-wrapper">
-            <div class="cd">
-              <img src="" alt="" class="image">
+        <div class="top">
+          <div class="back" @click="back">
+            <i class="icon-back"></i>
+          </div>
+          <div class="title">{{currentSong.name}}</div>
+          <div class="subtitle">{{currentSong.singer}}</div>
+        </div>
+        <div class="middle">
+          <div class="middle-l">
+            <div class="cd-wrapper">
+              <div class="cd">
+                <img :src="currentSong.image" alt="" class="image" :class="">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom">
+          <div class="operators">
+            <div class="icon i-left">
+              <i class="icon-sequence"></i>
+            </div>
+            <div class="icon i-left">
+              <i class="icon-prev"></i>
+            </div>
+            <div class="icon i-center" @click="togglePlaying">
+              <i :class="playIcon"></i>
+            </div>
+            <div class="icon i-right">
+              <i class="icon-next"></i>
+            </div>
+            <div class="icon i-right">
+              <i class="icon icon-not-favorite"></i>
             </div>
           </div>
         </div>
       </div>
-      <div class="bottom">
-        <div class="operators">
-          <div class="icon i-left">
-            <i class="icon-sequence"></i>
-          </div>
-          <div class="icon i-left">
-            <i class="icon-prev"></i>
-          </div>
-          <div class="icon i-center">
-            <i class="icon-play"></i>
-          </div>
-          <div class="icon i-right">
-            <i class="icon-next"></i>
-          </div>
-          <div class="icon i-right">
-            <i class="icon icon-not-favorite"></i>
-          </div>
+    </transition>
+    <transition name="mini">
+      <div class="mini-player" v-show="!fullScreen" @click="open">
+        <div class="icon">
+          <img :src="currentSong.image" alt="" width="40" height="40">
+        </div>
+        <div class="text">
+          <h2 class="name">{{currentSong.name}}</h2>
+          <p class="desc">{{currentSong.singer}}</p>
+        </div>
+        <div class="control" @click.stop="togglePlaying">
+          <i :class="miniIcon"></i>
+        </div>
+        <div class="control">
+          <i class="icon-playlist"></i>
         </div>
       </div>
-    </div>
-    <div class="mini-player" v-show="!fullscreen">
-      <div class="icon">
-        <img src="" alt="" width="40" height="40">
-      </div>
-      <div class="text">
-        <h2 class="name"></h2>
-        <p class="desc"></p>
-      </div>
-      <div class="control">
-        <i class="icon-play-mini"></i>
-      </div>
-      <div class="control">
-        <i class="icon-playlist"></i>
-      </div>
-    </div>
+    </transition>
+    <audio :src="currentSong.url" ref="audio"></audio>
   </div>
 </template>
 
 <script>
-import  { mapGetters } from 'vuex'
+import { mapGetters, mapMutations } from 'vuex'
 
 export default {
   name: 'player',
@@ -68,8 +73,42 @@ export default {
       'playList',
       'fullScreen',
       'currentSong',
-      'currentIndex'
-    ])
+      'currentIndex',
+      'playing'
+    ]),
+    miniIcon () {
+      return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
+    },
+    playIcon () {
+      return this.playing ? 'icon-pause' : 'icon-play'
+    }
+  },
+  watch: {
+    playing (newVal) {
+      // 这里为什么要使用this.$nextTick(),因为在这个时候还在通过src加载音频，这个时候不能调用play()方法，会报错
+      this.$nextTick(() => {
+        if (newVal) {
+          this.$refs.audio.play()
+        } else {
+          this.$refs.audio.pause()
+        }
+      })
+    }
+  },
+  methods: {
+    ...mapMutations({
+      setFullScreen: 'SET_FULL_SCREEN',
+      setPlaying: 'SET_PLAYING'
+    }),
+    back () {
+      this.setFullScreen(false)
+    },
+    open () {
+      this.setFullScreen(true)
+    },
+    togglePlaying () {
+      this.setPlaying(!this.playing)
+    }
   }
 }
 </script>
@@ -87,6 +126,16 @@ export default {
       bottom: 0
       z-index: 150
       background: $color-background
+      &.normal-enter,&.normal-leave-to
+        opacity: 0
+        .top
+          transform: translate3d(0, -60%, 0)
+        .bottom
+          transform: translate3d(0, 60%, 0)
+      &.normal-enter-active,&.normal-leave-active
+        transition: all .3s
+        .top, .bottom
+          transition: all .3s cubic-bezier(.79,.14,.63,1.73)
       .background
         position: absolute
         left: 0
@@ -149,18 +198,20 @@ export default {
               box-sizing: border-box
               border: 10px solid rgba(255, 255, 255, 0.1)
               border-radius: 50%
-              &.play
-                animation: rotate 20s linear infinite
-              &.pause
-                animation-play-state: paused
+  
               .image
                 position: absolute
                 left: 0
                 top: 0
                 width: 100%
                 height: 100%
+                box-sizing: border-box
+                border: 10px solid rgba(255, 255, 255, 0.1)
                 border-radius: 50%
-
+                &.play
+                  animation rotate 20s linear infinite
+                &.pause
+                  animation-play-state pause
           .playing-lyric-wrapper
             width: 80%
             margin: 30px auto 0 auto
@@ -246,16 +297,6 @@ export default {
             text-align: left
           .icon-favorite
             color: $color-sub-theme
-      &.normal-enter-active, &.normal-leave-active
-        transition: all 0.4s
-        .top, .bottom
-          transition: all 0.4s cubic-bezier(0.86, 0.18, 0.82, 1.32)
-      &.normal-enter, &.normal-leave-to
-        opacity: 0
-        .top
-          transform: translate3d(0, -100px, 0)
-        .bottom
-          transform: translate3d(0, 100px, 0)
     .mini-player
       display: flex
       align-items: center
@@ -266,10 +307,10 @@ export default {
       width: 100%
       height: 60px
       background: $color-highlight-background
-      &.mini-enter-active, &.mini-leave-active
-        transition: all 0.4s
-      &.mini-enter, &.mini-leave-to
+      &.mini-enter,&.mini-leave-to
         opacity: 0
+      &.mini-enter-active,&.mini-leave-active
+        transition: all .3s
       .icon
         flex: 0 0 40px
         width: 40px
@@ -309,9 +350,9 @@ export default {
           left: 0
           top: 0
 
-  @keyframes rotate
-    0%
-      transform: rotate(0)
-    100%
-      transform: rotate(360deg)
+@keyframes rotate
+  0%
+    transform rotate(0deg)
+  100%
+    transform rotate(360deg)
 </style>

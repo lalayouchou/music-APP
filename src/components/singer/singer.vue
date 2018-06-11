@@ -88,7 +88,7 @@ export default {
       this.setSinger(singer) // 提交mutation，执行方法，修改state中的数据
     },
     ...mapMutations({
-      setSinger: 'GET_SINGER' // 将this.setSinger() 映射为 this.$store.commit('GET_SINGER')
+      setSinger: 'SET_SINGER' // 将this.setSinger() 映射为 this.$store.commit('GET_SINGER')
     })
   }
 }

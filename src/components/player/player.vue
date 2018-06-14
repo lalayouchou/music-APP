@@ -28,6 +28,13 @@
           </div>
         </div>
         <div class="bottom">
+          <div class="progress-wrapper">
+            <span class="time time-l">{{currentTime | format}}</span>
+            <div class="progress-bar-wrapper">
+              <progress-bar></progress-bar>      
+            </div>
+            <span class="time time-r">{{currentSong.duration | format}}</span>
+          </div>
           <div class="operators">
             <div class="icon i-left">
               <i class="icon-sequence"></i>
@@ -68,6 +75,7 @@
     <audio :src="currentSong.url"
     @canplay="ready"
     @error="error"
+    @timeupdate="timeChange"
     ref="audio"></audio>
   </div>
 </template>
@@ -76,6 +84,8 @@
 import { mapGetters, mapMutations } from 'vuex'
 import Animation from 'create-keyframe-animation'
 import {addPrefix} from 'common/js/dom'
+import {addZero} from 'common/js/util'
+import progressBar from '@/base/progress-bar/progress-bar'
 const transform = addPrefix('transform')
 
 export default {
@@ -83,8 +93,12 @@ export default {
   data () {
     return {
       songReady: false,
-      PosAndScale: {}
+      PosAndScale: {},
+      currentTime: 0
     }
+  },
+  components: {
+    progressBar
   },
   computed: {
     ...mapGetters([
@@ -105,6 +119,9 @@ export default {
     },
     disableClass () {
       return this.songReady ? '' : 'disable'
+    },
+    percent () {
+      return this.currentTime / this.currentSong.duration
     }
   },
   mounted () {
@@ -129,6 +146,14 @@ export default {
       })
     }
   },
+  filters: {
+    format (time) {
+      time = time | 0
+      const minute = time / 60 | 0
+      const second = addZero(time % 60)
+      return `${minute}:${second}`
+    }
+  },
   methods: {
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
@@ -145,6 +170,7 @@ export default {
       this.setPlaying(!this.playing)
     },
     prev () {
+      // 如果songReady不是true，也就是歌曲还没有加载到可以播放，那就不能点击下一首或者上一首
       if (!this.songReady) {
         return
       }
@@ -184,6 +210,7 @@ export default {
     },
     enter(el, done) {
       let {x, y, scale} = this.PosAndScale
+
       let animation = {
         0: {
           transform: `translate3d(${x}px, ${y}px, 0) scale(${scale})`
@@ -195,6 +222,7 @@ export default {
           transform: `translate3d(0, 0, 0) scale(1)`
         }
       }
+      // 使用create-keyframe-animation库，注册动画
       Animation.registerAnimation({
         name: 'move',
         animation,
@@ -203,31 +231,41 @@ export default {
           easing: 'linear'
         }
       })
+      // 使用create-keyframe-animation库，开始动画，并且传入回调函数
       Animation.runAnimation(this.$refs.cdWrapper, 'move', done)
     },
     afterEnter () {
+      // 消除注册的动画，也就是@keyframes
       Animation.unregisterAnimation('move')
+      // 将节点的animation属性设置为空
       this.$refs.cdWrapper.style.animation = ''
     },
     leave (el, done) {
       let {x, y, scale} = this.PosAndScale
+      // 这里没有使用动画库，因为这里是直接从原点运动到偏移点，动作比较简单
       this.$refs.cdWrapper.style[transform] = `translate3d(${x}px, ${y}px, 0) scale(${scale})`
       this.$refs.cdWrapper.style['transition'] = 'all .3s linear'
+      // 注意css3动画结束有两个触发的事件transitionend/animationend，触发回调函数
       this.$refs.cdWrapper.addEventListener('transitionend', done)
     },
     afterLeave () {
+      // 将必要的属性设置为空
       this.$refs.cdWrapper.style[transform] = ''
       this.$refs.cdWrapper.style['transition'] = ''
+    },
+    timeChange () {
+      this.currentTime = this.$refs.audio.currentTime
     },
     _getPosAndScale () {
       const paddingLeft = 40
       const paddingBottom = 30
       const paddingtop = 80
-      const targetWidth = window.innerWidth * 0.8
+      const targetWidth = window.innerWidth * 0.8 // 视口宽度80%
       const miniWidth = 40
       const x = -(window.innerWidth / 2 - paddingLeft)
       const y = window.innerHeight - paddingtop - paddingBottom - window.innerWidth / 2
       const scale = miniWidth / targetWidth
+      // 返回偏移点坐标
       return {
         x,
         y,

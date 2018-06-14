@@ -7,7 +7,7 @@
       <div class="bg-image" :style="bgStyle" ref="bgImage">
         <div class="filter"></div>
         <div class="play-wrapper" ref="play">
-          <div class="play">
+          <div class="play" @click="random">
             <i class="icon-play"></i>
             <span class="text">随机播放全部</span>
           </div>
@@ -135,8 +135,12 @@ export default {
       this.probeType = 3
       this.listenScroll = true
     },
+    random () {
+      this.selectRandomPlay({list: this.songList})
+    },
     ...mapActions([
-      'selectPlay'
+      'selectPlay',
+      'selectRandomPlay'
     ])
   }
 }

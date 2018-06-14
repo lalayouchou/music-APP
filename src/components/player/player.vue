@@ -29,15 +29,18 @@
         </div>
         <div class="bottom">
           <div class="progress-wrapper">
-            <span class="time time-l">{{currentTime | format}}</span>
+            <span class="time time-l">{{Math.min(currentTime, currentSong.duration) | format}}</span>
             <div class="progress-bar-wrapper">
-              <progress-bar></progress-bar>      
+              <progress-bar
+              :percent="percent"
+              @changePercent="timeChange"
+              ></progress-bar>
             </div>
             <span class="time time-r">{{currentSong.duration | format}}</span>
           </div>
           <div class="operators">
-            <div class="icon i-left">
-              <i class="icon-sequence"></i>
+            <div class="icon i-left" @click="togglePlayMode">
+              <i :class="iconMode"></i>
             </div>
             <div class="icon i-left" @click="prev" :class="disableClass">
               <i class="icon-prev"></i>
@@ -65,7 +68,9 @@
           <p class="desc">{{currentSong.singer}}</p>
         </div>
         <div class="control" @click.stop="togglePlaying">
-          <i :class="miniIcon"></i>
+          <progress-circle :radius="32" :percent="percent">
+            <i :class="miniIcon" class="icon-mini"></i>
+          </progress-circle>
         </div>
         <div class="control">
           <i class="icon-playlist"></i>
@@ -75,7 +80,8 @@
     <audio :src="currentSong.url"
     @canplay="ready"
     @error="error"
-    @timeupdate="timeChange"
+    @timeupdate="timeupdate"
+    @ended="end"
     ref="audio"></audio>
   </div>
 </template>
@@ -84,8 +90,10 @@
 import { mapGetters, mapMutations } from 'vuex'
 import Animation from 'create-keyframe-animation'
 import {addPrefix} from 'common/js/dom'
-import {addZero} from 'common/js/util'
+import {addZero, shuffle} from 'common/js/util'
+import {playMode} from 'common/js/config'
 import progressBar from '@/base/progress-bar/progress-bar'
+import progressCircle from '@/base/progress-circle/progress-circle'
 const transform = addPrefix('transform')
 
 export default {
@@ -98,7 +106,8 @@ export default {
     }
   },
   components: {
-    progressBar
+    progressBar,
+    progressCircle
   },
   computed: {
     ...mapGetters([
@@ -106,7 +115,9 @@ export default {
       'fullScreen',
       'currentSong',
       'currentIndex',
-      'playing'
+      'playing',
+      'mode',
+      'sequenceList' // 这个数组是一直不会发生变化的，变化的是播放列表
     ]),
     miniIcon () {
       return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
@@ -122,6 +133,9 @@ export default {
     },
     percent () {
       return this.currentTime / this.currentSong.duration
+    },
+    iconMode () {
+      return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random'
     }
   },
   mounted () {
@@ -140,7 +154,10 @@ export default {
         }
       })
     },
-    currentSong () {
+    currentSong (newSong, oldSong) {
+      if (newSong.id === oldSong.id) {
+        return
+      }
       this.$nextTick(() => {
         this.$refs.audio.play()
       })
@@ -158,7 +175,9 @@ export default {
     ...mapMutations({
       setFullScreen: 'SET_FULL_SCREEN',
       setPlaying: 'SET_PLAYING',
-      setCurrentIndex: 'SET_CURRENT_INDEX'
+      setCurrentIndex: 'SET_CURRENT_INDEX',
+      setMode: 'SET_MODE',
+      setPlayList: 'SET_PLAY_LIST'
     }),
     back () {
       this.setFullScreen(false)
@@ -202,13 +221,24 @@ export default {
       }
       this.songReady = false
     },
+    loop () {
+      this.$refs.audio.currentTime = 0
+      this.$refs.audio.play()
+    },
+    end () {
+      if (this.mode === playMode.loop) {
+        this.loop()
+      } else {
+        this.next()
+      }
+    },
     ready () {
       this.songReady = true
     },
     error () {
       this.songReady = true
     },
-    enter(el, done) {
+    enter (el, done) {
       let {x, y, scale} = this.PosAndScale
 
       let animation = {
@@ -253,8 +283,31 @@ export default {
       this.$refs.cdWrapper.style[transform] = ''
       this.$refs.cdWrapper.style['transition'] = ''
     },
-    timeChange () {
+    timeupdate () {
       this.currentTime = this.$refs.audio.currentTime
+    },
+    timeChange (precent) {
+      let currentTime = precent * this.currentSong.duration
+      this.$refs.audio.currentTime = currentTime
+    },
+    togglePlayMode () {
+      let mode = this.mode
+      mode = (mode + 1) % 3 // 在0-2之间循环
+      this.setMode(mode) // 改变样式，在改变样式之后，需要改变播放的playList的值
+      let list = []
+      if (mode === playMode.random) {
+        list = shuffle(this.sequenceList)
+      } else {
+        list = this.sequenceList
+      }
+      this.resetCurrentIndex(list)
+      this.setPlayList(list)
+      // 这里为什么要分两种情况设置呢，因为有可能是从从随机模式切换到顺序模式，也有可能是从顺序模式切换到随机模式
+    },
+    resetCurrentIndex (list) { // 这个函数是为了保持在播放模式发生变化后，保持歌曲本身不变
+      const id = this.currentSong.id
+      const index = list.findIndex(n => id === n.id) // Array.prototype.findIndex((n) => n > 33),通过调用回调函数，来返回符合预期的数组值的索引
+      this.setCurrentIndex(index)
     },
     _getPosAndScale () {
       const paddingLeft = 40

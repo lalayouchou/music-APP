@@ -1,37 +1,24 @@
-class Song {
-  // 使用工厂函数创建对象，这里使用了对象解构写法
-  constructor ({id, name, mid, image, duration, singer, album, url}) {
-    this.id = id
-    this.name = name
-    this.mid = mid
-    this.image = image
-    this.duration = duration
-    this.singer = singer
-    this.album = album
-    this.url = url
+import {commonParams} from './config.js'
+import axios from 'axios'
+
+export function getSongLyric (songmid) {
+  const url = '/api/getSongLyric'
+  let params = {
+    pcachetime: +new Date(),
+    /* callback: 'MusicJsonCallback_lrc', 不使用jsonp获取数据 */
+    g_tk: 5381,
+    loginUin: 0,
+    hostUin: 0,
+    needNewCode: 0,
+    songmid,
+    platform: 'ypp',
+    format: 'json' // 这里由于使用后端代理，我们希望返回的是一个json数据，而不是jsonp
   }
-}
-// 暴露出去的函数接口，只要把musicData传入就可以了
-export function createSong (musicData) {
-  return new Song({
-    id: musicData.songid,
-    name: musicData.songname,
-    mid: musicData.songmid,
-    duration: musicData.interval,
-    album: musicData.albumname,
-    singer: filterSinger(musicData.singer),
-    image: `https://y.gtimg.cn/music/photo_new/T002R300x300M000${musicData.albummid}.jpg?max_age=2592000`,
-    url: `http://ws.stream.qqmusic.qq.com/C100${musicData.songmid}.m4a?fromtag=0&guid=126548448`
+  /* let originOption = Object.assign({}, option, {name: 'MusicJsonCallback_lrc'}) */
+  params = Object.assign({}, params, commonParams)
+  return axios.get(url, {
+    params
   })
-}
-// 连接多个歌手名称，join在只有一个的时候，也可以使用
-function filterSinger (singer) {
-  if (!singer) {
-    return
-  }
-  let ret = []
-  for (let item of singer) {
-    ret.push(item.name)
-  }
-  return ret.join('/')
+    .then((res) => { return Promise.resolve(res.data) })// axios返回的数据都放在response.data里面
+    .catch((e) => { console.log(e) })
 }

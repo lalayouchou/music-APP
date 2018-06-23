@@ -160,6 +160,7 @@ export default {
       }
       this.$nextTick(() => {
         this.$refs.audio.play()
+        this.currentSong.getLyric() // 因为歌词最后获取后是当前歌曲的属性，所以在当前歌曲监听函数里面调用
       })
     }
   },

@@ -12,7 +12,7 @@
 <script>
 import {mapGetters} from 'vuex'
 import {getDetail} from '@/api/singer.js'
-import {createSong} from '@/api/song.js'
+import {createSong} from '@/common/js/song.js'
 import {ERR_OK} from '@/api/config.js'
 import musicList from '../music-list/music-list.vue'
 

@@ -10,6 +10,12 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
 
+const express = require('express')
+const app = express()
+const axios = require('axios')
+const appRouter = express.Router()
+app.use('/api', appRouter)
+
 const HOST = process.env.HOST
 const PORT = process.env.PORT && Number(process.env.PORT)
 
@@ -42,6 +48,22 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     quiet: true, // necessary for FriendlyErrorsPlugin
     watchOptions: {
       poll: config.dev.poll,
+    },
+    before(app) {
+      app.get('/api/getSongLyric', function (req, res) {
+        let params = req.query
+        axios
+        .get('https://c.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg',{
+          headers: {
+            referer: 'https://y.qq.com/portal/player.html'
+          },
+          params: params
+        }).then((response) => {
+          res.json(response.data)// 注意这里res是express里面的，response是axios里面的
+        }).catch((e) => {
+          console.log(e)
+        })
+      })
     }
   },
   plugins: [

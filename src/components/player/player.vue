@@ -26,6 +26,17 @@
               </div>
             </div>
           </div>
+          <scroll class="middle-r" :data="currentLyric && currentLyric.lines" ref="lyricList">
+            <div class="lyric-wrapper"> <!-- 不写在一起是因为batter-scroll必须需要一个子元素，刚开始v-if为false，相当于没有子元素，会报错-->
+              <div v-if="currentLyric">
+                <p class="text"
+                ref="lyricLine"
+                :class="{'current': currentLineNum === index}"
+                v-for="(line, index) of currentLyric.lines"
+                :key="index">{{line.txt}}</p>
+              </div>
+            </div>
+          </scroll>
         </div>
         <div class="bottom">
           <div class="progress-wrapper">
@@ -94,6 +105,8 @@ import {addZero, shuffle} from 'common/js/util'
 import {playMode} from 'common/js/config'
 import progressBar from '@/base/progress-bar/progress-bar'
 import progressCircle from '@/base/progress-circle/progress-circle'
+import Lyric from 'lyric-parser'
+import Scroll from '@/base/scroll/scroll'
 const transform = addPrefix('transform')
 
 export default {
@@ -102,12 +115,15 @@ export default {
     return {
       songReady: false,
       PosAndScale: {},
-      currentTime: 0
+      currentTime: 0,
+      currentLyric: null,
+      currentLineNum: 0
     }
   },
   components: {
     progressBar,
-    progressCircle
+    progressCircle,
+    Scroll
   },
   computed: {
     ...mapGetters([
@@ -160,7 +176,7 @@ export default {
       }
       this.$nextTick(() => {
         this.$refs.audio.play()
-        this.currentSong.getLyric() // 因为歌词最后获取后是当前歌曲的属性，所以在当前歌曲监听函数里面调用
+        this.getLyric()// 因为歌词最后获取后是当前歌曲的属性，所以在当前歌曲监听函数里面调用
       })
     }
   },
@@ -324,6 +340,21 @@ export default {
         x,
         y,
         scale
+      }
+    },
+    getLyric () {
+      this.currentSong.getLyric().then((lyric) => {
+        this.currentLyric = new Lyric(lyric, this.handleLyric) // 初始化创建回调函数，执行play方法的时候，执行该回调函数
+        if (this.playing) {
+          this.currentLyric.play()
+        }
+      })
+    },
+    handleLyric ({lineNum, txt}) { // new Lyric()函数所接受的回调函数的参数
+      this.currentLineNum = lineNum
+      if (lineNum > 5) { // 前五行是不用滚动的，大于五行才滚动
+        let lineEl = this.$refs.lyricLine[lineNum - 5]
+        this.$refs.lyricList.scrollToElement(lineEl)
       }
     }
   }

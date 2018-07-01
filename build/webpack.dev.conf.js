@@ -59,7 +59,15 @@ const devWebpackConfig = merge(baseWebpackConfig, {
           },
           params: params
         }).then((response) => {
-          res.json(response.data)// 注意这里res是express里面的，response是axios里面的
+          let ret = response.data
+          if (typeof ret === 'string') { // 如果返回的是一组字符串，而不是json数据格式，那么就处理数据
+            let reg = /^\w+\(({[^()]+})\)$/ //匹配到的是以{}为开头结尾，中间没有小括号的内容
+            let matches = ret.match(reg)
+            if (matches) {
+              ret = JSON.parse(matches[1]) // 将JSON数据解析为js字符串
+            }
+          }
+          res.json(ret)// 注意这里res是express里面的，response是axios里面的
         }).catch((e) => {
           console.log(e)
         })

@@ -29,6 +29,9 @@
                 <img :src="currentSong.image" alt="" class="image" :class="cdClass">
               </div>
             </div>
+            <div class="playing-lyric-wrapper">
+              <div class="playing-lyric">{{playingLiric}}</div>
+            </div>
           </div>
           <scroll class="middle-r" :data="currentLyric && currentLyric.lines" ref="lyricList">
             <div class="lyric-wrapper"> <!-- 不写在一起是因为batter-scroll必须需要一个子元素，刚开始v-if为false，相当于没有子元素，会报错-->
@@ -126,7 +129,8 @@ export default {
       currentTime: 0,
       currentLyric: null,
       currentLineNum: 0,
-      currentShow: 'cd'
+      currentShow: 'cd',
+      playingLiric: ''
     }
   },
   components: {
@@ -186,6 +190,9 @@ export default {
       if (newSong.id === oldSong.id) {
         return
       }
+      if (this.currentLyric) {
+        this.currentLyric.stop() // lyric-parser本质上是通过setTimeout实现的，所以在重新获取新的歌词的时候，需要 把原来的计时器清空
+      }
       this.$nextTick(() => {
         this.$refs.audio.play()
         this.getLyric()// 因为歌词最后获取后是当前歌曲的属性，所以在当前歌曲监听函数里面调用
@@ -216,6 +223,9 @@ export default {
     },
     togglePlaying () {
       this.setPlaying(!this.playing)
+      if (this.currentLyric) {
+        this.currentLyric.togglePlay() // 歌曲在停止播放的时候，歌词也需要停止播放
+      }
     },
     prev () {
       // 如果songReady不是true，也就是歌曲还没有加载到可以播放，那就不能点击下一首或者上一首
@@ -223,14 +233,18 @@ export default {
         return
       }
       let currentIndex = this.currentIndex
-      if (currentIndex === 0) {
-        currentIndex = this.playList.length - 1
+      if (this.playList.length === 1) {
+        this.loop()
       } else {
-        currentIndex--
-      }
-      this.setCurrentIndex(currentIndex)
-      if (!this.playing) {
-        this.setPlaying(true)
+        if (currentIndex === 0) {
+          currentIndex = this.playList.length - 1
+        } else {
+          currentIndex--
+        }
+        this.setCurrentIndex(currentIndex)
+        if (!this.playing) {
+          this.setPlaying(true)
+        }
       }
       this.songReady = false
     },
@@ -239,20 +253,28 @@ export default {
         return
       }
       let currentIndex = this.currentIndex
-      if (currentIndex === this.playList.length - 1) {
-        currentIndex = 0
+
+      if (this.playList.length === 1) {
+        this.loop() // 如果歌曲列表只有一首歌，那么就相当于单曲循环了，这里的currentSong.id不会改变，所以要加一个条件判断
       } else {
-        currentIndex++
-      }
-      this.setCurrentIndex(currentIndex)
-      if (!this.playing) {
-        this.setPlaying(true)
+        if (currentIndex === this.playList.length - 1) {
+          currentIndex = 0
+        } else {
+          currentIndex++
+        }
+        this.setCurrentIndex(currentIndex)
+        if (!this.playing) {
+          this.setPlaying(true)
+        }
       }
       this.songReady = false
     },
     loop () {
       this.$refs.audio.currentTime = 0
       this.$refs.audio.play()
+      if (this.currentLyric) {
+        this.currentLyric.seek(0) // 如果播放模式是循环播放，那么在切换的时候，需要回到歌词最顶端
+      }
     },
     end () {
       if (this.mode === playMode.loop) {
@@ -318,6 +340,10 @@ export default {
     timeChange (precent) {
       let currentTime = precent * this.currentSong.duration
       this.$refs.audio.currentTime = currentTime
+      console.log(this.currentSong.duration)
+      if (this.currentLyric) {
+        this.currentLyric.seek(currentTime * 1000) // 因为这里currentTime是以秒为单位的，所以要转换为ms
+      }
     },
     togglePlayMode () {
       let mode = this.mode
@@ -356,10 +382,14 @@ export default {
     },
     getLyric () {
       this.currentSong.getLyric().then((lyric) => {
-        this.currentLyric = new Lyric(lyric, this.handleLyric) // 初始化创建回调函数，执行play方法的时候，执行该回调函数
+        this.currentLyric = new Lyric(lyric, this.handleLyric) // 初始化创建回调函数，在歌词行数发生变化的时候，执行该回调函数
         if (this.playing) {
           this.currentLyric.play()
         }
+      }).catch(() => {
+        this.currentLyric = null // 如果歌词获取失败，那么就把歌词相关的数据置为初始值
+        this.currentLineNum = 0
+        this.playingLiric = ''
       })
     },
     handleLyric ({lineNum, txt}) { // new Lyric()函数所接受的回调函数的参数
@@ -370,6 +400,7 @@ export default {
       } else {
         this.$refs.lyricList.scrollTo(0, 0, 1000) // 在五行之内，滚动到顶部
       }
+      this.playingLiric = txt
     },
     middleTouchstart (e) {
       this.touch.initialed = true

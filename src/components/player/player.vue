@@ -18,8 +18,12 @@
           <div class="title" v-html="currentSong.name"></div>
           <div class="subtitle" v-html="currentSong.singer"></div>
         </div>
-        <div class="middle">
-          <div class="middle-l">
+        <div class="middle"
+        @touchstart.prevent="middleTouchstart"
+        @touchmove.prevent="middleTouchmove"
+        @touchend="middleTouchend"
+        >
+          <div class="middle-l" ref="cdImage">
             <div class="cd-wrapper" ref="cdWrapper">
               <div class="cd">
                 <img :src="currentSong.image" alt="" class="image" :class="cdClass">
@@ -39,6 +43,10 @@
           </scroll>
         </div>
         <div class="bottom">
+          <div class="dot-wrapper">
+            <div class="dot" :class="{'active': currentShow === 'cd'}"></div>
+            <div class="dot" :class="{'active': currentShow === 'lyric'}"></div>
+          </div>
           <div class="progress-wrapper">
             <span class="time time-l">{{Math.min(currentTime, currentSong.duration) | format}}</span>
             <div class="progress-bar-wrapper">
@@ -117,7 +125,8 @@ export default {
       PosAndScale: {},
       currentTime: 0,
       currentLyric: null,
-      currentLineNum: 0
+      currentLineNum: 0,
+      currentShow: 'cd'
     }
   },
   components: {
@@ -158,6 +167,9 @@ export default {
     this.$nextTick(() => {
       this.PosAndScale = this._getPosAndScale()
     })
+  },
+  created () {
+    this.touch = {} // 这里不需要添加Getter和Setter,所以不需要添加在data中
   },
   watch: {
     playing (newVal) {
@@ -354,8 +366,69 @@ export default {
       this.currentLineNum = lineNum
       if (lineNum > 5) { // 前五行是不用滚动的，大于五行才滚动
         let lineEl = this.$refs.lyricLine[lineNum - 5]
-        this.$refs.lyricList.scrollToElement(lineEl)
+        this.$refs.lyricList.scrollToElement(lineEl, 1000)
+      } else {
+        this.$refs.lyricList.scrollTo(0, 0, 1000) // 在五行之内，滚动到顶部
       }
+    },
+    middleTouchstart (e) {
+      this.touch.initialed = true
+      const touch = e.touches[0]
+      this.touch.startX = touch.pageX
+      this.touch.startY = touch.pageY
+    },
+    middleTouchmove (e) {
+      if (!this.touch.initialed) {
+        return
+      }
+
+      const touch = e.touches[0]
+      let deltaX = touch.pageX - parseFloat(this.touch.startX) // 注意，这里获取的this.touch.startX是字符串形式
+      let deltaY = touch.pageY - parseFloat(this.touch.startY)
+
+      if (Math.abs(deltaY) > Math.abs(deltaX)) { // 如果Y方向的值大于X方向的值，则返回
+        return
+      }
+
+      const left = this.currentShow === 'cd' ? 0 : -window.innerWidth
+
+      const offsetWidth = Math.min(0, Math.max(-window.innerWidth, (left + deltaX))) // 因为右边歌词部分的偏移的范围只有在（-window.innerWidth, 0)之内，left是初始值，在'cd'和'lyric'情况下是不一样的，我们需要区别初始值
+      this.touch.precent = Math.abs(offsetWidth / window.innerWidth)
+      const opacity = 1 - this.touch.precent
+
+      this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
+      this.$refs.lyricList.$el.style.transitionDuration = '0' // 这里的改变是实时的
+      this.$refs.cdImage.style.opacity = opacity
+      this.$refs.cdImage.style.transitionDuration = '0'
+    },
+    middleTouchend () {
+      let offsetWidth
+      let opacity
+      const time = 300
+      if (this.currentShow === 'cd') {
+        if (this.touch.precent > 0.1) {
+          offsetWidth = -window.innerWidth
+          opacity = 0
+          this.currentShow = 'lyric'
+        } else {
+          offsetWidth = 0
+          opacity = 1
+        }
+      } else {
+        if (this.touch.precent < 0.9) {
+          offsetWidth = 0
+          opacity = 1
+          this.currentShow = 'cd'
+        } else {
+          offsetWidth = -window.innerWidth
+          opacity = 0
+        }
+      }
+      this.$refs.lyricList.$el.style[transform] = `translate3d(${offsetWidth}px, 0, 0)`
+      this.$refs.lyricList.$el.style.transitionDuration = `${time}ms`
+      this.$refs.cdImage.style.opacity = opacity
+      this.$refs.cdImage.style.transitionDuration = `${time}ms`
+      this.touch.initialed = false
     }
   }
 }

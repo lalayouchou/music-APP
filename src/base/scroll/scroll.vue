@@ -80,6 +80,9 @@ export default {
     },
     _disable () {
       this.scroll && this.scroll.disable()
+    },
+    refresh () {
+      this._refresh()
     }
   }
 }

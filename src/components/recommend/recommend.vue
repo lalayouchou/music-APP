@@ -1,5 +1,5 @@
 <template>
-  <div class="recommend">
+  <div class="recommend" ref="recommend">
     <scroll class="recommend-content" ref="scroll" :data="discList">
       <div>
         <div class="slider-wrapper" v-if="recommends.length">
@@ -35,8 +35,11 @@ import Scroll from '@/base/scroll/scroll'
 import Loading from '@/base/loading/loading'
 import {getRecommend, getDiscList} from '@/api/recommend.js'
 import {ERR_OK} from '@/api/config.js'
+import {playlistMixin} from '@/common/js/mixin'
+
 export default {
   name: 'recommend',
+  mixins: [playlistMixin],
   components: {
     Slider,
     Scroll,
@@ -75,6 +78,11 @@ export default {
         this.checkLoaded = true
         this.$refs.scroll._refresh()
       }
+    },
+    handlePlayList (playlist) {
+      const bottom = playlist.length > 0 ? '60px' : '' // 使用mixins方式插入
+      this.$refs.recommend.style.bottom = bottom // 这里的style就是针对scroll组件的
+      this.$refs.scroll.refresh()
     }
   }
 }

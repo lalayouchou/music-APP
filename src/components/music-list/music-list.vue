@@ -39,12 +39,14 @@ import Loading from '@/base/loading/loading'
 import songList from '@/base/song-list/song-list.vue'
 import {addPrefix} from 'common/js/dom'
 import {mapActions} from 'vuex'
+import {playlistMixin} from '@/common/js/mixin'
 
 const RESERVED_HEIGHT = 44
 const transform = addPrefix('transform')
 
 export default {
   name: 'music-list',
+  mixins: [playlistMixin],
   props: {
     title: {
       type: String,
@@ -141,7 +143,12 @@ export default {
     ...mapActions([
       'selectPlay',
       'selectRandomPlay'
-    ])
+    ]),
+    handlePlayList (playlist) {
+      const bottom = playlist.length > 0 ? '60px' : '' // 使用mixins方式插入
+      this.$refs.list.$el.style.bottom = bottom // 这里的style就是针对scroll组件的
+      this.$refs.list.refresh()
+    }
   }
 }
 </script>

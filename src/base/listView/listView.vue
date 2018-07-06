@@ -185,6 +185,9 @@ export default {
     },
     handleSelect (item) {
       this.$emit('select', item)
+    },
+    refresh () {
+      this.$refs.scroll.refresh()
     }
   }
 }

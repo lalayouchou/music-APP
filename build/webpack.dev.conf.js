@@ -72,6 +72,22 @@ const devWebpackConfig = merge(baseWebpackConfig, {
           console.log(e)
         })
       })
+      app.get('/api/getSongList', function (req, res) {
+        let params = req.query
+        const disstid = params.disstid
+        axios
+        .get('https://c.y.qq.com/qzone/fcg-bin/fcg_ucc_getcdinfo_byids_cp.fcg', {
+          headers: {
+            referer: `https://y.qq.com/n/yqq/playlist/${disstid}.html`
+          },
+          params: params
+        }).then((response) => {
+          let ret = response.data
+          res.json(ret)
+        }).catch((e) => {
+          console.log(e)
+        })
+      })
     }
   },
   plugins: [

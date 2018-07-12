@@ -21,6 +21,9 @@ const mutations = {
   },
   [types.SET_SEQUENCE_LIST] (state, sequenceList) {
     state.sequenceList = sequenceList
+  },
+  [types.SET_DISC] (state, disc) {
+    state.disc = disc
   }
 }
 

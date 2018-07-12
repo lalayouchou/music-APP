@@ -178,9 +178,9 @@ export default {
   .title
     position: absolute
     top: 0
-    left: 10%
+    left: 15%
     z-index: 40
-    width: 80%
+    width: 70%
     no-wrap()
     text-align: center
     line-height: 44px

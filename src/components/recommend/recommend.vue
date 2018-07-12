@@ -14,7 +14,7 @@
         <div class="recommend-list">
           <h2 class="list-title">热门歌单推荐</h2>
           <ul v-if="discList.length">
-            <li v-for="item of discList" :key="item.content_id" class="item">
+            <li v-for="item of discList" :key="item.content_id" class="item" @click="selectItem(item)">
                 <img v-lazy="item.cover" alt="" class="icon" width="60" height="60">
                 <div class="text">
                   <h2 class="name">{{item.username}}</h2>
@@ -26,6 +26,7 @@
         <loading v-if="!discList.length"></loading>
       </div>
     </scroll>
+    <router-view></router-view>
   </div>
 </template>
 
@@ -36,6 +37,7 @@ import Loading from '@/base/loading/loading'
 import {getRecommend, getDiscList} from '@/api/recommend.js'
 import {ERR_OK} from '@/api/config.js'
 import {playlistMixin} from '@/common/js/mixin'
+import {mapMutations} from 'vuex'
 
 export default {
   name: 'recommend',
@@ -83,7 +85,16 @@ export default {
       const bottom = playlist.length > 0 ? '60px' : '' // 使用mixins方式插入
       this.$refs.recommend.style.bottom = bottom // 这里的style就是针对scroll组件的
       this.$refs.scroll.refresh()
-    }
+    },
+    selectItem (item) {
+      this.$router.push({
+        path: `/recommend/${item.id}`
+      })
+      this.setDisc(item)
+    },
+    ...mapMutations({
+      setDisc: 'SET_DISC'
+    })
   }
 }
 </script>

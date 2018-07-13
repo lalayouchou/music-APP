@@ -4,6 +4,7 @@
     class="disc"
     :title="disc.title"
     :bgImage="disc.cover"
+    :songList="songList"
     >
     </music-list>
   </transition>
@@ -14,6 +15,7 @@ import musicList from '../music-list/music-list.vue'
 import {mapGetters} from 'vuex'
 import {getSongList} from '@/api/recommend'
 import {ERR_OK} from '@/api/config'
+import {createSong} from 'common/js/song'
 
 export default {
   name: 'Disc',
@@ -28,13 +30,33 @@ export default {
   created () {
     this._normalize()
   },
+  data () {
+    return {
+      songList: []
+    }
+  },
   methods: {
     _normalize () {
+      if (!this.disc['content_id']) { // 如果获取不到id,返回
+        this.$router.push({
+          path: '/recommend'
+        })
+        return
+      }
       getSongList(this.disc['content_id']).then((res) => {
         if (res.code === ERR_OK) {
-          console.log(res.cdlist)
+          this.songList = this._normalizeSongs(res.cdlist[0].songlist) // 初始化歌曲列表
         }
       })
+    },
+    _normalizeSongs (list) {
+      let res = []
+      list.forEach((musicData) => {
+        if (musicData.songid && musicData.albummid) {
+          res.push(createSong(musicData))
+        }
+      })
+      return res
     }
   }
 }

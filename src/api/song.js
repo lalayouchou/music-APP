@@ -15,7 +15,7 @@ export function getSongLyric (songmid) {
     format: 'json' // 这里由于使用后端代理，我们希望返回的是一个json数据，而不是jsonp
   }
   /* let originOption = Object.assign({}, option, {name: 'MusicJsonCallback_lrc'}) */
-  params = Object.assign({}, params, commonParams)
+  params = Object.assign({}, commonParams, params)
   return axios.get(url, {
     params
   })

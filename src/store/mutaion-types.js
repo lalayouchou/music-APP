@@ -13,3 +13,5 @@ export const SET_PLAY_LIST = 'SET_PLAY_LIST'
 export const SET_SEQUENCE_LIST = 'SET_SEQUENCE_LIST'
 
 export const SET_DISC = 'SET_DISC'
+
+export const SET_TOP = 'SET_TOP'

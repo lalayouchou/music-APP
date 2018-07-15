@@ -8,7 +8,8 @@ const state = {
   fullScreen: false,
   currentIndex: -1,
   mode: playMode.sequence, // 播放模式,
-  disc: {} // 推荐信息
+  disc: {}, // 推荐信息
+  top: {}
 }
 
 export default state

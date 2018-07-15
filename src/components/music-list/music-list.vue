@@ -25,6 +25,7 @@
         :songList="songList"
         class="song-list-wrapper"
         @select="handleSelect"
+        :rank="rank"
         ></song-list>
         <div class="loading-container" v-show="!songList.length">
           <loading></loading>
@@ -61,6 +62,10 @@ export default {
       default () {
         return []
       }
+    },
+    rank: {
+      type: Boolean,
+      default: false
     }
   },
   components: {

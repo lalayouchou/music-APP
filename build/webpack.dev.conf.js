@@ -88,6 +88,38 @@ const devWebpackConfig = merge(baseWebpackConfig, {
           console.log(e)
         })
       })
+      app.get('/api/getTopList', function (req, res) {
+        let params = req.query
+        axios
+        .get('https://c.y.qq.com/v8/fcg-bin/fcg_myqq_toplist.fcg', {
+          headers: {
+            origin: 'https://y.qq.com',
+            referer: 'https://y.qq.com/m/index.html'
+          },
+          params: params
+        }).then((response) => {
+          let ret = response.data
+          res.json(ret)
+        }).catch((e) => {
+          console.log(e)
+        })
+      })
+      app.get('/api/getMusicList', function (req, res) {
+        let params = req.query
+        axios
+        .get('https://c.y.qq.com/v8/fcg-bin/fcg_v8_toplist_cp.fcg', {
+          headers: {
+            origin: 'https://y.qq.com',
+            referer: 'https://y.qq.com/w/toplist.html?ADTAG=myqq&from=myqq&channel=10007100&id=4&type=top'
+          },
+          params: params
+        }).then((response) => {
+          let ret = response.data
+          res.json(ret)
+        }).catch((e) => {
+          console.log(e)
+        })
+      })
     }
   },
   plugins: [

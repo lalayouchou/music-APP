@@ -120,6 +120,38 @@ const devWebpackConfig = merge(baseWebpackConfig, {
           console.log(e)
         })
       })
+      app.get('/api/getHotKey', function (req, res) {
+        let params = req.query
+        axios
+        .get('https://c.y.qq.com/splcloud/fcgi-bin/gethotkey.fcg', {
+          headers: {
+            origin: 'https://y.qq.com',
+            referer: 'https://y.qq.com/m/index.html'
+          },
+          params: params
+        }).then((response) => {
+          let ret = response.data
+          res.json(ret)
+        }).catch((e) => {
+          console.log(e)
+        })
+      })
+      app.get('/api/search', function (req, res) {
+        let params = req.query
+        axios
+        .get('https://c.y.qq.com/soso/fcgi-bin/search_for_qq_cp', {
+          headers: {
+            origin: 'https://y.qq.com',
+            referer: 'https://y.qq.com/m/index.html'
+          },
+          params: params
+        }).then((response) => {
+          let ret = response.data
+          res.json(ret)
+        }).catch((e) => {
+          console.log(e)
+        })
+      })
     }
   },
   plugins: [

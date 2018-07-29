@@ -22,7 +22,10 @@ export default {
   },
   methods: {
     clear () {
-      this.query = ""
+      this.query = ''
+    },
+    set (key) {
+      this.query = key
     }
   },
   created () {
@@ -34,7 +37,7 @@ export default {
 </script>
 
 <style scoped lang="stylus" rel="stylesheet/stylus">
-  @import "~common/stylus/variable"
+@import "~common/stylus/variable"
 
   .search-box
     display: flex
